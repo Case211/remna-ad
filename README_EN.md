@@ -25,7 +25,7 @@ Contact points:
 ### What’s New
 - Faster polling: `poll_interval` reduced to 0.5s.
 
-Reference for eGames: [`wiki.egam.es`](https://wiki.egam.es/)
+eGames's script related Wiki: [`wiki.egam.es`](https://wiki.egam.es/)
 
 ### Cookie-based Authorisation (eGames)
 1. Obtain cookies from the Remnawave panel using the guide: https://wiki.egam.es/configuration/external-api/#accessing-api-through-cookies.
