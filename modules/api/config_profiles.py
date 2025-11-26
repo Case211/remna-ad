@@ -38,6 +38,16 @@ class ConfigProfileAPI:
         return []
 
     @staticmethod
+    async def get_profile_by_uuid(profile_uuid: str) -> Optional[Dict[str, Any]]:
+        """Get a config profile by UUID (v2.2.6)."""
+        return await RemnaAPI.get(f"config-profiles/{profile_uuid}")
+
+    @staticmethod
+    async def get_computed_config(profile_uuid: str) -> Optional[Dict[str, Any]]:
+        """Get computed config for a config profile (v2.2.6)."""
+        return await RemnaAPI.get(f"config-profiles/{profile_uuid}/computed-config")
+
+    @staticmethod
     async def get_profile_users(profile_uuid: str) -> List[Dict[str, Any]]:
         """Get users for a specific config profile (if supported by API)."""
         result = await RemnaAPI.get(f"config-profiles/{profile_uuid}/users")

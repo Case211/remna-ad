@@ -4,6 +4,11 @@ class HostAPI:
     """API methods for host management"""
     
     @staticmethod
+    async def get_all_tags():
+        """Get all host tags (v2.2.6)."""
+        return await RemnaAPI.get("hosts/tags")
+
+    @staticmethod
     async def get_all_hosts():
         """Get all hosts"""
         return await RemnaAPI.get("hosts")

@@ -94,7 +94,7 @@ Performance / UI tuning:
 - Search across multiple fields for convenient detail viewing and management.
 
 ## Compatibility Notes
-- Verified against Remnawave API v2.1.13.
+- Verified against Remnawave API v2.2.6.
 
 ## License
 MIT — see [LICENSE](LICENSE).

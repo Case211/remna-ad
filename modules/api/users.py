@@ -123,6 +123,11 @@ class UserAPI:
         """Get user by tag"""
         result = await RemnaAPI.get(f"users/by-tag/{tag}")
         return result if result else []
+
+    @staticmethod
+    async def get_all_tags():
+        """Get list of all user tags (v2.2.6)."""
+        return await RemnaAPI.get("users/tags")
     
     @staticmethod
     async def create_user(user_data):
@@ -222,7 +227,7 @@ class UserAPI:
     async def reset_user_traffic(uuid):
         """Reset user traffic"""
         return await RemnaAPI.post(f"users/{uuid}/actions/reset-traffic")
-    
+
     
     @staticmethod
     async def get_user_usage_by_range(uuid, start_date, end_date):
@@ -232,11 +237,24 @@ class UserAPI:
             "end": end_date
         }
         return await RemnaAPI.get(f"users/stats/usage/{uuid}/range", params)
-    
+
     @staticmethod
     async def get_user_hwid_devices(uuid):
         """Get user HWID devices"""
         return await RemnaAPI.get(f"hwid/devices/{uuid}")
+
+    @staticmethod
+    async def delete_all_user_hwid_devices(uuid):
+        """Delete all HWID devices for a user (v2.2.6)."""
+        data = {
+            "userUuid": uuid
+        }
+        return await RemnaAPI.post("hwid/devices/delete-all", data)
+
+    @staticmethod
+    async def get_hwid_devices_stats():
+        """Get aggregated HWID devices stats (v2.2.6)."""
+        return await RemnaAPI.get("hwid/devices/stats")
     
     @staticmethod
     async def add_user_hwid_device(uuid, hwid, platform=None, os_version=None, device_model=None, user_agent=None):
@@ -269,6 +287,16 @@ class UserAPI:
         }
         
         return await RemnaAPI.post("hwid/devices/delete", data)
+
+    @staticmethod
+    async def get_accessible_nodes(uuid):
+        """Get nodes accessible for the user (v2.2.6)."""
+        return await RemnaAPI.get(f"users/{uuid}/accessible-nodes")
+
+    @staticmethod
+    async def get_subscription_request_history(uuid):
+        """Get a user's subscription request history (v2.2.6)."""
+        return await RemnaAPI.get(f"users/{uuid}/subscription-request-history")
     
     @staticmethod
     async def search_users_by_partial_name(partial_name):
