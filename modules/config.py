@@ -111,9 +111,12 @@ CREATE_USER, CREATE_USER_FIELD = range(12, 14)
 BULK_MENU, BULK_ACTION, BULK_CONFIRM = range(14, 17)
 EDIT_NODE, EDIT_NODE_FIELD = range(17, 19)
 EDIT_HOST, EDIT_HOST_FIELD = range(19, 21)
-# Steps for host creation wizard
-CREATE_HOST, HOST_PROFILE, HOST_INBOUND, HOST_PARAMS = range(27, 31)
+# Node wizard
 CREATE_NODE, NODE_NAME, NODE_ADDRESS, NODE_PORT, NODE_TLS, SELECT_INBOUNDS = range(21, 27)
+# Host wizard
+CREATE_HOST, HOST_PROFILE, HOST_INBOUND, HOST_PARAMS = range(27, 31)
+# SSH session flow
+SSH_START, SSH_HOST, SSH_LOGIN, SSH_PASSWORD, SSH_MENU, SSH_SHELL, SSH_CMD, SSH_ADD_NAME, SSH_ADD_DESC, SSH_ADD_CMD = range(31, 41)
 
 # User creation fields
 USER_FIELDS = {
@@ -138,3 +141,29 @@ DASHBOARD_SHOW_UPTIME = os.getenv("DASHBOARD_SHOW_UPTIME", "true").lower() == "t
 # Настройки поиска пользователей
 ENABLE_PARTIAL_SEARCH = os.getenv("ENABLE_PARTIAL_SEARCH", "true").lower() == "true"
 SEARCH_MIN_LENGTH = int(os.getenv("SEARCH_MIN_LENGTH", "2"))
+# Telegram topic/thread configuration (optional)
+def _parse_int_env(name: str):
+    val = os.getenv(name, "").strip()
+    if not val:
+        return None
+    try:
+        return int(val)
+    except ValueError:
+        logger.error(f"Invalid integer for {name}: '{val}'")
+        return None
+
+TELEGRAM_DEFAULT_THREAD_ID = _parse_int_env("TELEGRAM_DEFAULT_THREAD_ID")
+TELEGRAM_SSH_THREAD_ID = _parse_int_env("TELEGRAM_SSH_THREAD_ID")
+TELEGRAM_SSH_OUTPUT_THREAD_ID = _parse_int_env("TELEGRAM_SSH_OUTPUT_THREAD_ID")
+
+# Admin notifications (optional)
+def _parse_bool_env(name: str, default: bool = False) -> bool:
+    val = os.getenv(name, "").strip().lower()
+    if not val:
+        return default
+    return val in ("1", "true", "yes", "on")
+
+ADMIN_NOTIFICATIONS_ENABLED = _parse_bool_env("ADMIN_NOTIFICATIONS_ENABLED", False)
+ADMIN_NOTIFICATIONS_CHAT_ID = _parse_int_env("ADMIN_NOTIFICATIONS_CHAT_ID")
+ADMIN_NOTIFICATIONS_THREAD_ID = _parse_int_env("ADMIN_NOTIFICATIONS_THREAD_ID")
+ADMIN_NOTIFICATIONS_TICKETS_THREAD_ID = _parse_int_env("ADMIN_NOTIFICATIONS_TICKETS_THREAD_ID")

@@ -96,12 +96,6 @@ class UserAPI:
         return await RemnaAPI.get(f"users/by-short-uuid/{short_uuid}")
     
     @staticmethod
-    async def get_user_by_subscription_uuid(subscription_uuid):
-        """Get user by subscription UUID (v208 exposes subscriptions separately)."""
-        # No direct endpoint found in v208 for users/by-subscription-uuid
-        return None
-    
-    @staticmethod
     async def get_user_by_username(username):
         """Get user by username"""
         return await RemnaAPI.get(f"users/by-username/{username}")

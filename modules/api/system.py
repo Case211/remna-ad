@@ -39,12 +39,4 @@ class SystemAPI:
         return await RemnaAPI.post("system/tools/happ/encrypt", payload)
 
     
-    @staticmethod
-    async def get_xray_config():
-        """Not available in v208"""
-        return None
-    
-    @staticmethod
-    async def update_xray_config(config_data):
-        """Not available in v208"""
-        return None
+    # Note: xray config endpoints are not available in v2.2.6

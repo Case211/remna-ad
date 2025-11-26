@@ -382,26 +382,6 @@ class InboundAPI:
             }
     
     @staticmethod
-    async def add_inbound_to_users(_inbound_uuid):
-        """Not supported in v208 (users no longer manage inbounds directly)"""
-        return None
-    
-    @staticmethod
-    async def remove_inbound_from_users(_inbound_uuid):
-        """Not supported in v208 (users no longer manage inbounds directly)"""
-        return None
-    
-    @staticmethod
-    async def add_inbound_to_nodes(_inbound_uuid):
-        """Not supported in v208 (nodes use config profile activeInbounds)"""
-        return None
-    
-    @staticmethod
-    async def remove_inbound_from_nodes(_inbound_uuid):
-        """Not supported in v208 (nodes use config profile activeInbounds)"""
-        return None
-    
-    @staticmethod
     async def debug_user_structure():
         """Debug function to understand user data structure in v208"""
         try:

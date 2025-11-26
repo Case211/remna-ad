@@ -37,11 +37,6 @@ class BulkAPI:
         return await RemnaAPI.post("users/bulk/update", data)
 
     @staticmethod
-    async def bulk_update_users_inbounds(uuids, inbounds):
-        """Not supported in v208 (users do not have activeUserInbounds)"""
-        return None
-
-    @staticmethod
     async def bulk_update_users_squads(uuids, squads):
         """Bulk update users internal squads (v2.2.6)."""
         data = {

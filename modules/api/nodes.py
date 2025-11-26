@@ -116,16 +116,6 @@ class NodeAPI:
             "end": end_date
         }
         return await RemnaAPI.get("nodes/usage/range", params)
-    
-    @staticmethod
-    async def add_inbound_to_all_nodes(inbound_uuid):
-        """Not supported in v2113: inbounds are managed via config profiles"""
-        return None
-    
-    @staticmethod
-    async def remove_inbound_from_all_nodes(inbound_uuid):
-        """Not supported in v2113: inbounds are managed via config profiles"""
-        return None
         
     @staticmethod
     async def get_node_certificate():
