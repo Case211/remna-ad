@@ -141,7 +141,7 @@ DASHBOARD_SHOW_UPTIME = os.getenv("DASHBOARD_SHOW_UPTIME", "true").lower() == "t
 # Настройки поиска пользователей
 ENABLE_PARTIAL_SEARCH = os.getenv("ENABLE_PARTIAL_SEARCH", "true").lower() == "true"
 SEARCH_MIN_LENGTH = int(os.getenv("SEARCH_MIN_LENGTH", "2"))
-# Telegram topic/thread configuration (optional)
+# Parse integer env var
 def _parse_int_env(name: str):
     val = os.getenv(name, "").strip()
     if not val:
@@ -152,18 +152,6 @@ def _parse_int_env(name: str):
         logger.error(f"Invalid integer for {name}: '{val}'")
         return None
 
-TELEGRAM_DEFAULT_THREAD_ID = _parse_int_env("TELEGRAM_DEFAULT_THREAD_ID")
-TELEGRAM_SSH_THREAD_ID = _parse_int_env("TELEGRAM_SSH_THREAD_ID")
-TELEGRAM_SSH_OUTPUT_THREAD_ID = _parse_int_env("TELEGRAM_SSH_OUTPUT_THREAD_ID")
-
-# Admin notifications (optional)
-def _parse_bool_env(name: str, default: bool = False) -> bool:
-    val = os.getenv(name, "").strip().lower()
-    if not val:
-        return default
-    return val in ("1", "true", "yes", "on")
-
-ADMIN_NOTIFICATIONS_ENABLED = _parse_bool_env("ADMIN_NOTIFICATIONS_ENABLED", False)
-ADMIN_NOTIFICATIONS_CHAT_ID = _parse_int_env("ADMIN_NOTIFICATIONS_CHAT_ID")
-ADMIN_NOTIFICATIONS_THREAD_ID = _parse_int_env("ADMIN_NOTIFICATIONS_THREAD_ID")
-ADMIN_NOTIFICATIONS_TICKETS_THREAD_ID = _parse_int_env("ADMIN_NOTIFICATIONS_TICKETS_THREAD_ID")
+# SSH final output destination (optional)
+SSH_OUTPUT_CHAT_ID = _parse_int_env("SSH_OUTPUT_CHAT_ID")
+SSH_OUTPUT_THREAD_ID = _parse_int_env("SSH_OUTPUT_THREAD_ID")

@@ -13,6 +13,7 @@ from modules.handlers.hosts import show_hosts_menu
 from modules.handlers.inbounds import show_inbounds_menu, handle_inbounds_menu
 from modules.handlers.bulk import show_bulk_menu
 from modules.handlers.core.start import show_main_menu
+from modules.handlers.ssh.handlers import start_ssh_flow
 from modules.handlers.core.language import (
     LANGUAGE_MENU_CALLBACK,
     LANGUAGE_SELECT_PREFIX,
@@ -82,6 +83,10 @@ async def handle_menu_selection(update: Update, context: ContextTypes.DEFAULT_TY
     elif data == "create_user" or data == "menu_create_user":
         await start_create_user(update, context)
         return CREATE_USER_FIELD
+
+    elif data == "ssh" or data == "menu_ssh":
+        # Start SSH connection flow
+        return await start_ssh_flow(update, context)
 
     elif data == "back_to_main":
         await show_main_menu(update, context)

@@ -17,6 +17,7 @@ from modules.config import (
     CREATE_USER, CREATE_USER_FIELD, BULK_CONFIRM, 
     EDIT_NODE, EDIT_NODE_FIELD, EDIT_HOST, EDIT_HOST_FIELD, NODE_PORT,
     CREATE_NODE, NODE_NAME, NODE_ADDRESS, SELECT_INBOUNDS, CREATE_HOST, HOST_PROFILE, HOST_INBOUND, HOST_PARAMS,
+    SSH_START, SSH_HOST, SSH_LOGIN, SSH_PASSWORD, SSH_SHELL,
     ADMIN_USER_IDS
 )
 from modules.utils.auth import check_authorization
@@ -40,6 +41,21 @@ from modules.handlers.hosts import (
 )
 from modules.handlers.inbounds import handle_inbounds_menu
 from modules.handlers.bulk import handle_bulk_menu, handle_bulk_confirm
+from modules.handlers.ssh.handlers import (
+    start_ssh_flow,
+    handle_host_input,
+    handle_login_input,
+    handle_password_input,
+    handle_shell_message,
+    handle_exit,
+    show_ssh_menu,
+    handle_ssh_menu_callback,
+    handle_custom_command_text,
+    handle_cmd_message,
+    handle_add_repo_name,
+    handle_add_repo_desc,
+    handle_add_repo_cmd,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +121,45 @@ def create_conversation_handler():
                 CallbackQueryHandler(handle_user_action, pattern="^user_action_"),
                 CallbackQueryHandler(handle_user_action, pattern="^(edit_|disable_|enable_|reset_|revoke_|delete_|hwid_|stats_|confirm_del_hwid_)"),
                 CallbackQueryHandler(handle_user_selection)
+            ],
+            # SSH flow
+            SSH_START: [
+                CallbackQueryHandler(start_ssh_flow)
+            ],
+            SSH_HOST: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_host_input),
+                CallbackQueryHandler(handle_exit, pattern="^ssh_exit$")
+            ],
+            SSH_LOGIN: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_login_input),
+                CallbackQueryHandler(handle_exit, pattern="^ssh_exit$")
+            ],
+            SSH_PASSWORD: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_password_input),
+                CallbackQueryHandler(handle_exit, pattern="^ssh_exit$")
+            ],
+            SSH_MENU: [
+                CallbackQueryHandler(handle_ssh_menu_callback, pattern="^(ssh_repo_.+|ssh_custom|ssh_menu|ssh_stop|ssh_sendfile|ssh_exit)$"),
+            ],
+            SSH_SHELL: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_shell_message),
+                CallbackQueryHandler(handle_exit, pattern="^ssh_exit$")
+            ],
+            SSH_CMD: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_cmd_message),
+                CallbackQueryHandler(handle_ssh_menu_callback, pattern="^(ssh_stop|ssh_sendfile|ssh_menu|ssh_exit)$"),
+            ],
+            SSH_ADD_NAME: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_add_repo_name),
+                CallbackQueryHandler(handle_ssh_menu_callback, pattern="^(ssh_menu|ssh_exit)$"),
+            ],
+            SSH_ADD_DESC: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_add_repo_desc),
+                CallbackQueryHandler(handle_ssh_menu_callback, pattern="^(ssh_menu|ssh_exit)$"),
+            ],
+            SSH_ADD_CMD: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_add_repo_cmd),
+                CallbackQueryHandler(handle_ssh_menu_callback, pattern="^(ssh_menu|ssh_exit)$"),
             ],
             WAITING_FOR_INPUT: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_input),

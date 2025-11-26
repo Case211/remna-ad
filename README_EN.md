@@ -78,15 +78,9 @@ Required:
 - `OPERATOR_USER_IDS` - list of operator IDs with read access (e.g. `789012345`)
 - `ADMIN_USER_IDS` - comma-separated admin IDs (e.g. `123,456`)
 
-- `TELEGRAM_DEFAULT_THREAD_ID` - default forum topic ID for general bot messages (optional)
-- `TELEGRAM_SSH_THREAD_ID` - forum topic ID for SSH streaming output (optional)
-- `TELEGRAM_SSH_OUTPUT_THREAD_ID` - forum topic ID for SSH output files/logs (optional)
-
-- Admin notifications (optional):
-  - `ADMIN_NOTIFICATIONS_ENABLED` — enable sending bot notifications to a dedicated admin chat (true/false)
-  - `ADMIN_NOTIFICATIONS_CHAT_ID` — target chat/channel ID (use `-100...` for channels)
-  - `ADMIN_NOTIFICATIONS_THREAD_ID` — default topic ID for admin notifications (optional)
-  - `ADMIN_NOTIFICATIONS_TICKETS_THREAD_ID` — topic ID for ticket-related notifications (optional)
+- SSH output (optional):
+  - `SSH_OUTPUT_CHAT_ID` - chat/channel ID for final SSH output file (use `-100...` for channels)
+  - `SSH_OUTPUT_THREAD_ID` - forum topic ID for the output file (optional)
 
 Performance / UI tuning:
 - `DASHBOARD_SHOW_SYSTEM_STATS` (true/false)

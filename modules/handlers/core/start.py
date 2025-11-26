@@ -50,6 +50,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard.append([InlineKeyboardButton("🔄 Массовые операции", callback_data="bulk")])
         keyboard.append([InlineKeyboardButton("➕ Создать пользователя", callback_data="create_user")])
 
+        keyboard.append([InlineKeyboardButton("SSH", callback_data="ssh")])
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     # Получаем статистику системы
@@ -380,5 +381,6 @@ async def get_basic_system_stats():
     except Exception as e:
         logger.error(f"Error getting basic system stats: {e}")
         return "📈 *Статистика временно недоступна*\n"
+
 
 
