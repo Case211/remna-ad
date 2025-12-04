@@ -99,6 +99,7 @@ class Messages:
     CONFIRM_RESET = "⚠️ Вы уверены, что хотите сбросить трафик пользователя?"
     CONFIRM_REVOKE = "⚠️ Вы уверены, что хотите отозвать подписку пользователя?"
 from modules.api.users import UserAPI
+from modules.api.squads import SquadAPI
 from modules.utils.formatters import format_bytes, format_user_details, format_user_details_safe, escape_markdown, safe_edit_message
 from modules.utils.selection_helpers import SelectionHelper
 from modules.utils.auth import (
@@ -1578,6 +1579,9 @@ async def start_create_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.pop("current_field_index", None)
     context.user_data.pop("search_type", None)  # Clear search type to avoid confusion
     context.user_data.pop("using_template", None)
+    context.user_data.pop("selected_external_squads", None)
+    context.user_data.pop("internalSquads_options", None)
+    context.user_data.pop("externalSquads_options", None)
     
     # Initialize user creation data
     context.user_data["create_user"] = {}
@@ -1682,11 +1686,15 @@ async def start_template_creation(update: Update, context: ContextTypes.DEFAULT_
     if customize:
         # Полная настройка - проходим все поля
         context.user_data["create_user_fields"] = list(USER_FIELDS.keys())
-        context.user_data["current_field_index"] = 0
     else:
-        # Только имя пользователя и опциональные поля
-        context.user_data["create_user_fields"] = ["username"]
-        context.user_data["current_field_index"] = 0
+        # Только имя пользователя и опциональные поля, плюс выбор сквадов
+        base_fields = ["username"]
+        if "internalSquads" in USER_FIELDS:
+            base_fields.append("internalSquads")
+        if "externalSquads" in USER_FIELDS:
+            base_fields.append("externalSquads")
+        context.user_data["create_user_fields"] = base_fields
+    context.user_data["current_field_index"] = 0
     
     # Начинаем с первого поля
     await ask_for_field(update, context)
@@ -1703,6 +1711,10 @@ async def ask_for_field(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     field = fields[index]
     field_name = USER_FIELDS[field]
+
+    # Special handling for internal/external squads
+    if field in ("internalSquads", "externalSquads"):
+        return await show_squad_selection(update, context, field)
     
     # Проверяем, используется ли шаблон
     using_template = context.user_data.get("using_template", False)
@@ -2012,6 +2024,99 @@ async def ask_for_field(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     return CREATE_USER_FIELD
 
+
+async def show_squad_selection(update: Update, context: ContextTypes.DEFAULT_TYPE, field: str):
+    """Render squad selection for user creation"""
+    is_internal = field == "internalSquads"
+    options_key = f"{field}_options"
+    selected_key = "activeInternalSquads" if is_internal else "selected_external_squads"
+    title = "Внутренний сквад" if is_internal else "Внешний сквад"
+
+    # Prepare storage for selections
+    create_user = context.user_data.setdefault("create_user", {})
+    selected = create_user.setdefault("activeInternalSquads", []) if is_internal else context.user_data.setdefault(selected_key, [])
+
+    # Load squads list (cache per session)
+    if options_key not in context.user_data:
+        try:
+            if is_internal:
+                resp = await SquadAPI.get_internal_squads()
+                key_name = "internalSquads"
+            else:
+                resp = await SquadAPI.get_external_squads()
+                key_name = "externalSquads"
+
+            squads = []
+            if isinstance(resp, dict):
+                if key_name in resp:
+                    squads = resp.get(key_name) or []
+                elif isinstance(resp.get("response"), dict) and key_name in resp["response"]:
+                    squads = resp["response"].get(key_name) or []
+                elif isinstance(resp.get("response"), list):
+                    squads = resp.get("response") or []
+            elif isinstance(resp, list):
+                squads = resp
+
+            context.user_data[options_key] = squads
+        except Exception as e:
+            logger.error(f"Failed to load {field}: {e}")
+            context.user_data[options_key] = []
+
+    squads = context.user_data.get(options_key) or []
+
+    # If no squads available, skip field
+    if not squads:
+        context.user_data["current_field_index"] += 1
+        await ask_for_field(update, context)
+        return CREATE_USER_FIELD
+
+    def chunk_buttons(buttons, size=2):
+        for i in range(0, len(buttons), size):
+            yield buttons[i:i + size]
+
+    buttons = []
+    for squad in squads:
+        uuid = str(squad.get("uuid") or squad.get("id") or "").strip()
+        if not uuid:
+            continue
+        name = squad.get("name") or squad.get("title") or uuid
+        is_selected = uuid in selected
+        prefix = "toggle_internal_squad_" if is_internal else "toggle_external_squad_"
+        buttons.append(InlineKeyboardButton(f"{'✅' if is_selected else '▫️'} {name}", callback_data=f"{prefix}{uuid}"))
+
+    keyboard = [list(row) for row in chunk_buttons(buttons, size=2)]
+    keyboard.append([InlineKeyboardButton("✅ Готово", callback_data="internal_squad_done" if is_internal else "external_squad_done")])
+    keyboard.append([InlineKeyboardButton("⏩ Пропустить", callback_data="skip_field")])
+    keyboard.append([InlineKeyboardButton("❌ Отмена", callback_data="cancel_create")])
+
+    selected_names = []
+    for squad in squads:
+        uuid = str(squad.get("uuid") or squad.get("id") or "").strip()
+        if uuid in selected:
+            selected_names.append(squad.get("name") or squad.get("title") or uuid)
+    selected_text = ", ".join(selected_names) if selected_names else "не выбрано"
+
+    message = f"{'🏠' if is_internal else '🌐'} *{title}*\n\n"
+    message += "Отметьте сквады, в которые нужно добавить пользователя.\n"
+    message += f"Текущее: {selected_text}"
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    if update.callback_query:
+        await update.callback_query.edit_message_text(
+            text=message,
+            reply_markup=reply_markup,
+            parse_mode="Markdown"
+        )
+    else:
+        await update.message.reply_text(
+            text=message,
+            reply_markup=reply_markup,
+            parse_mode="Markdown"
+        )
+
+    return CREATE_USER_FIELD
+
 @check_admin
 async def handle_create_user_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle user input when creating a user"""
@@ -2068,6 +2173,36 @@ async def handle_create_user_input(update: Update, context: ContextTypes.DEFAULT
         elif data == "finish_template_user":
             # Завершаем создание пользователя с шаблоном
             return await finish_create_user(update, context)
+        
+        elif data.startswith("toggle_internal_squad_"):
+            squad_uuid = data[len("toggle_internal_squad_"):]
+            selected = context.user_data.setdefault("create_user", {}).setdefault("activeInternalSquads", [])
+            if squad_uuid in selected:
+                selected.remove(squad_uuid)
+            else:
+                selected.append(squad_uuid)
+            await show_squad_selection(update, context, "internalSquads")
+            return CREATE_USER_FIELD
+        
+        elif data.startswith("toggle_external_squad_"):
+            squad_uuid = data[len("toggle_external_squad_"):]
+            selected = context.user_data.setdefault("selected_external_squads", [])
+            if squad_uuid in selected:
+                selected.remove(squad_uuid)
+            else:
+                selected.append(squad_uuid)
+            await show_squad_selection(update, context, "externalSquads")
+            return CREATE_USER_FIELD
+        
+        elif data == "internal_squad_done":
+            context.user_data["current_field_index"] += 1
+            await ask_for_field(update, context)
+            return CREATE_USER_FIELD
+        
+        elif data == "external_squad_done":
+            context.user_data["current_field_index"] += 1
+            await ask_for_field(update, context)
+            return CREATE_USER_FIELD
         
         elif data == "add_optional_fields":
             # Добавляем дополнительные поля
@@ -2468,6 +2603,20 @@ async def finish_create_user(update: Update, context: ContextTypes.DEFAULT_TYPE)
         # Default to 30 days from now
         user_data["expireAt"] = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%dT00:00:00.000Z")
 
+    # Apply internal squads selection if present
+    if "activeInternalSquads" not in user_data:
+        selected_internal = context.user_data.get("create_user", {}).get("activeInternalSquads", [])
+        if selected_internal:
+            user_data["activeInternalSquads"] = selected_internal
+
+    selected_external = context.user_data.get("selected_external_squads", [])
+    external_names = []
+    if selected_external:
+        for squad in context.user_data.get("externalSquads_options", []) or []:
+            uuid = str(squad.get("uuid") or squad.get("id") or "").strip()
+            if uuid in selected_external:
+                external_names.append(squad.get("name") or squad.get("title") or uuid)
+
     # Log data for debugging
     logger.debug(f"Creating user with data: {user_data}")
     logger.info(f"Creating user with trafficLimitStrategy: {user_data.get('trafficLimitStrategy')}")
@@ -2490,8 +2639,19 @@ async def finish_create_user(update: Update, context: ContextTypes.DEFAULT_TYPE)
         # v208 может не возвращать subscriptionUuid — показываем только URL, если есть
         if result.get('subscriptionUrl'):
             message += f"\n🔗 URL подписки: `{result['subscriptionUrl']}`\n"
+
+        # Attach external squads after creation if selected
+        if selected_external and result.get('uuid'):
+            try:
+                for squad_uuid in selected_external:
+                    await SquadAPI.add_users_to_external_squad(squad_uuid, [result['uuid']])
+                label = external_names if external_names else selected_external
+                message += f"\n🏷️ Добавлен во внешние сквады: {', '.join(label)}"
+            except Exception as e:
+                logger.error(f"Failed to add user to external squads: {e}")
+                message += "\n⚠️ Не удалось добавить во внешние сквады, проверьте логи."
         # Clear creation context now that user is created
-        for key in ("create_user", "create_user_fields", "current_field_index", "using_template", "search_type", "waiting_for"):
+        for key in ("create_user", "create_user_fields", "current_field_index", "using_template", "search_type", "waiting_for", "selected_external_squads", "internalSquads_options", "externalSquads_options"):
             context.user_data.pop(key, None)
 
         

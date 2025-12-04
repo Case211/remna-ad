@@ -9,6 +9,11 @@ class HostAPI:
         return await RemnaAPI.get("hosts")
     
     @staticmethod
+    async def get_tags():
+        """Get host tags (API v2.2.6)"""
+        return await RemnaAPI.get("hosts/tags")
+    
+    @staticmethod
     async def get_host_by_uuid(uuid):
         """Get host by UUID"""
         return await RemnaAPI.get(f"hosts/{uuid}")

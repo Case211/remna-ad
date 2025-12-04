@@ -1,6 +1,8 @@
+import logging
 from modules.api.client import RemnaAPI
 from typing import List, Dict, Any, Optional
 
+logger = logging.getLogger(__name__)
 
 class ConfigProfileAPI:
     """API methods for config profiles (v208)"""
@@ -39,18 +41,8 @@ class ConfigProfileAPI:
 
     @staticmethod
     async def get_profile_users(profile_uuid: str) -> List[Dict[str, Any]]:
-        """Get users for a specific config profile (if supported by API)."""
-        result = await RemnaAPI.get(f"config-profiles/{profile_uuid}/users")
-        # Expected { response: { total, users: [...] } } or direct { users: [...] }
-        if isinstance(result, dict):
-            if "users" in result:
-                return result.get("users") or []
-            resp = result.get("response")
-            if isinstance(resp, dict) and "users" in resp:
-                return resp.get("users") or []
-            return []
-        if isinstance(result, list):
-            return result
+        """Deprecated in API v2.2.6: endpoint removed, keep shim to avoid 404."""
+        logger.info("config-profiles/{uuid}/users is not available in API v2.2.6; returning empty list")
         return []
 
 

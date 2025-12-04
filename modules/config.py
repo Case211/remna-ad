@@ -125,7 +125,9 @@ USER_FIELDS = {
     'telegramId': 'Telegram ID',
     'email': 'Email',
     'tag': 'Тег',
-    'hwidDeviceLimit': 'Лимит устройств'
+    'hwidDeviceLimit': 'Лимит устройств',
+    'internalSquads': 'Внутренний сквад',
+    'externalSquads': 'Внешний сквад'
 }
 # Dashboard display settings - что показывать на главном экране
 DASHBOARD_SHOW_SYSTEM_STATS = os.getenv("DASHBOARD_SHOW_SYSTEM_STATS", "true").lower() == "true"

@@ -232,6 +232,16 @@ class UserAPI:
             "end": end_date
         }
         return await RemnaAPI.get(f"users/stats/usage/{uuid}/range", params)
+
+    @staticmethod
+    async def get_user_accessible_nodes(uuid):
+        """Get nodes accessible by user (API v2.2.6)"""
+        return await RemnaAPI.get(f"users/{uuid}/accessible-nodes")
+
+    @staticmethod
+    async def get_subscription_request_history(uuid):
+        """Get subscription request history for user (API v2.2.6)"""
+        return await RemnaAPI.get(f"users/{uuid}/subscription-request-history")
     
     @staticmethod
     async def get_user_hwid_devices(uuid):
@@ -269,6 +279,17 @@ class UserAPI:
         }
         
         return await RemnaAPI.post("hwid/devices/delete", data)
+
+    @staticmethod
+    async def delete_all_user_hwid_devices(uuid):
+        """Delete all HWID devices for a user (API v2.2.6)"""
+        data = {"userUuid": uuid}
+        return await RemnaAPI.post("hwid/devices/delete-all", data)
+
+    @staticmethod
+    async def get_hwid_devices_stats():
+        """Get HWID devices statistics (API v2.2.6)"""
+        return await RemnaAPI.get("hwid/devices/stats")
     
     @staticmethod
     async def search_users_by_partial_name(partial_name):

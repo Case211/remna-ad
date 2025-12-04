@@ -232,26 +232,10 @@ class InboundAPI:
                 except Exception as e:
                     logger.warning(f"Heuristic tag match failed: {e}")
             
-            # Final fallback: use profile users endpoint if available
+            # Final fallback removed: profile users endpoint is absent in API v2.2.6
             if not inbound_users and profile_uuids_for_inbound:
-                try:
-                    logger.info("Trying profile users endpoint as final fallback")
-                    seen = set()
-                    for p_uuid in profile_uuids_for_inbound:
-                        try:
-                            p_users = await ConfigProfileAPI.get_profile_users(p_uuid)
-                            for u in p_users or []:
-                                if isinstance(u, dict):
-                                    u_uuid = str(u.get('uuid'))
-                                    if u_uuid and u_uuid not in seen:
-                                        inbound_users.append(u)
-                                        seen.add(u_uuid)
-                        except Exception as e:
-                            logger.warning(f"Failed to load users for profile {p_uuid}: {e}")
-                    logger.info(f"Profile users fallback added {len(inbound_users)} users")
-                except Exception as e:
-                    logger.warning(f"Profile users fallback failed: {e}")
-            
+                logger.info("Skipping profile-users fallback because endpoint is not available in API v2.2.6")
+
             logger.info(f"Final result: {len(inbound_users)} users found for inbound {inbound_uuid}")
             if not inbound_users:
                 try:

@@ -17,6 +17,36 @@ class SystemAPI:
     async def get_nodes_statistics():
         """Get nodes statistics"""
         return await RemnaAPI.get("system/stats/nodes")
+    
+    @staticmethod
+    async def get_health():
+        """Get Remnawave health status (API v2.2.6)"""
+        return await RemnaAPI.get("system/health")
+
+    @staticmethod
+    async def get_nodes_metrics():
+        """Get nodes metrics from Prometheus endpoint (API v2.2.6)"""
+        return await RemnaAPI.get("system/nodes/metrics")
+
+    @staticmethod
+    async def get_remnawave_settings():
+        """Get Remnawave settings (API v2.2.6)"""
+        return await RemnaAPI.get("remnawave-settings")
+
+    @staticmethod
+    async def run_srr_matcher(payload):
+        """Run SRR matcher tester (API v2.2.6)"""
+        return await RemnaAPI.post("system/testers/srr-matcher", payload)
+
+    @staticmethod
+    async def happ_encrypt(payload):
+        """Encrypt data for HAPP tool (API v2.2.6)"""
+        return await RemnaAPI.post("system/tools/happ/encrypt", payload)
+
+    @staticmethod
+    async def generate_x25519_keys():
+        """Generate x25519 keypair (API v2.2.6)"""
+        return await RemnaAPI.get("system/tools/x25519/generate")
 
     
     @staticmethod

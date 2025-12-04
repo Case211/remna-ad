@@ -48,6 +48,11 @@ class NodeAPI:
         return await RemnaAPI.post(f"nodes/{uuid}/actions/restart")
     
     @staticmethod
+    async def reset_node_traffic(uuid):
+        """Reset traffic counters for a node (API v2.2.6)"""
+        return await RemnaAPI.post(f"nodes/{uuid}/actions/reset-traffic")
+    
+    @staticmethod
     async def restart_all_nodes():
         """Restart all nodes"""
         return await RemnaAPI.post("nodes/actions/restart-all")
