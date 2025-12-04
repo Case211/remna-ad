@@ -668,7 +668,11 @@ async def handle_users_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     data = query.data
-    is_admin = context.user_data.get('is_admin', False)
+    if 'is_admin' in context.user_data:
+        is_admin = context.user_data['is_admin']
+    else:
+        is_admin = is_admin_user(update.effective_user.id) if update.effective_user else False
+        context.user_data['is_admin'] = is_admin
 
     try:
         logger.debug(f"handle_user_selection received callback data: {data}")
@@ -1030,7 +1034,11 @@ async def handle_user_action(update: Update, context: ContextTypes.DEFAULT_TYPE)
     await query.answer()
 
     data = query.data
-    is_admin = context.user_data.get('is_admin', False)
+    if 'is_admin' in context.user_data:
+        is_admin = context.user_data['is_admin']
+    else:
+        is_admin = is_admin_user(update.effective_user.id) if update.effective_user else False
+        context.user_data['is_admin'] = is_admin
 
     # Handle new SelectionHelper callback patterns
     if data.startswith("user_action_"):
