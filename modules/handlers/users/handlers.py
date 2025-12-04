@@ -2094,7 +2094,7 @@ async def show_squad_selection(update: Update, context: ContextTypes.DEFAULT_TYP
         uuid = str(squad.get("uuid") or squad.get("id") or "").strip()
         if uuid in selected:
             selected_names.append(squad.get("name") or squad.get("title") or uuid)
-    selected_text = ", ".join(selected_names) if selected_names else "не выбрано"
+    selected_text = ", ".join(escape_markdown(name) for name in selected_names) if selected_names else "не выбрано"
 
     message = f"{'🏠' if is_internal else '🌐'} *{title}*\n\n"
     message += "Отметьте сквады, в которые нужно добавить пользователя.\n"
@@ -3304,15 +3304,22 @@ async def handle_edit_field_selection(update: Update, context: ContextTypes.DEFA
             await query.edit_message_text("❌ Не удалось определить пользователя для обновления сквадов.")
             return EDIT_USER
         selected_internal = context.user_data.get("edit_selected_internal_squads", [])
+        name_map = {}
+        for squad in context.user_data.get("edit_internal_squads_options", []) or []:
+            uuid_val = str(squad.get("uuid") or squad.get("id") or "").strip()
+            if uuid_val:
+                name_map[uuid_val] = squad.get("name") or squad.get("title") or uuid_val
         try:
             await SquadAPI.bulk_update_internal_squads([user["uuid"]], selected_internal)
             context.user_data["edit_user"]["activeInternalSquads"] = selected_internal
+            label = [escape_markdown(name_map.get(uuid, uuid)) for uuid in selected_internal] if selected_internal else []
+            summary = ", ".join(label) if label else "не выбрано"
             keyboard = [
                 [InlineKeyboardButton("📝 Вернуться к редактированию", callback_data=f"edit_{user['uuid']}")],
                 [InlineKeyboardButton("👁️ Открыть пользователя", callback_data=f"view_{user['uuid']}")],
             ]
             await query.edit_message_text(
-                text=f"✅ Внутренние сквады обновлены: {', '.join(selected_internal) if selected_internal else 'не выбрано'}",
+                text=f"✅ Внутренние сквады обновлены: {summary}",
                 reply_markup=InlineKeyboardMarkup(keyboard),
                 parse_mode="Markdown"
             )
@@ -3365,7 +3372,7 @@ async def handle_edit_field_selection(update: Update, context: ContextTypes.DEFA
             # Update cached user info
             context.user_data["edit_user"]["externalSquads"] = list(already_in_squads.union(selected_external))
 
-            label = [name_map.get(uuid, uuid) for uuid in selected_external] if selected_external else []
+            label = [escape_markdown(name_map.get(uuid, uuid)) for uuid in selected_external] if selected_external else []
             summary = ", ".join(label) if label else "не выбрано"
             action_text = "Добавлен во внешние сквады" if to_add else "Сквады не изменены (пользователь уже состоит в выбранных)"
             keyboard = [
