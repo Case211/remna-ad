@@ -3240,16 +3240,38 @@ async def start_edit_user(update: Update, context: ContextTypes.DEFAULT_TYPE, uu
     ):
         context.user_data.pop(key, None)
     
-    # Создаем меню выбора поля для редактирования
-    keyboard = []
+    # Создаем меню выбора поля для редактирования (2 столбца, короткие подписи)
+    friendly_names = {
+        "username": "Логин",
+        "trafficLimitBytes": "Трафик",
+        "trafficLimitStrategy": "Стратегия",
+        "expireAt": "Дата",
+        "description": "Описание",
+        "telegramId": "Telegram ID",
+        "email": "Email",
+        "tag": "Тег",
+        "hwidDeviceLimit": "Устр-ва",
+        "internalSquads": "Внутр. сквады",
+        "externalSquads": "Внешн. сквады",
+    }
+
+    field_buttons = []
     for field_key, field_name in USER_FIELDS.items():
         if field_key in user:  # Показываем только поля, которые есть у пользователя
-            keyboard.append([InlineKeyboardButton(f"📝 {field_name}", callback_data=f"edit_field_{field_key}")])
+            label = friendly_names.get(field_key, short_label(field_name, 18))
+            field_buttons.append(InlineKeyboardButton(f"📝 {label}", callback_data=f"edit_field_{field_key}"))
 
-    # Direct buttons for squad management
-    keyboard.insert(0, [InlineKeyboardButton("🧭 Внутренние сквады", callback_data="edit_internal_squads")])
-    keyboard.insert(1, [InlineKeyboardButton("🌐 Внешние сквады", callback_data="edit_external_squads")])
+    def chunk(items, size=2):
+        for i in range(0, len(items), size):
+            yield items[i:i + size]
 
+    keyboard = [
+        [
+            InlineKeyboardButton("🏠 Внутренние", callback_data="edit_internal_squads"),
+            InlineKeyboardButton("🌐 Внешние", callback_data="edit_external_squads"),
+        ]
+    ]
+    keyboard.extend(list(chunk(field_buttons, 2)))
     keyboard.append([InlineKeyboardButton("🔙 Назад к пользователю", callback_data=f"view_{uuid}")])
     reply_markup = InlineKeyboardMarkup(keyboard)
     
