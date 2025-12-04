@@ -113,6 +113,13 @@ from modules.handlers.core.start import show_main_menu
 
 logger = logging.getLogger(__name__)
 
+# Helper to shorten long button labels for mobile UI
+def short_label(text: str, limit: int = 30) -> str:
+    label = str(text or "")
+    if len(label) <= limit:
+        return label
+    return label[: max(0, limit - 3)] + "..."
+
 # Декоратор для проверки авторизации
 def require_authorization(func):
     """Декоратор для проверки авторизации пользователя"""
