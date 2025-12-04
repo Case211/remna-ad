@@ -2162,7 +2162,6 @@ async def show_edit_squad_selection(update: Update, context: ContextTypes.DEFAUL
         await update.callback_query.edit_message_text(
             text=f"⚠️ Нет доступных сквадов для раздела «{title}».",
             reply_markup=InlineKeyboardMarkup(keyboard),
-            parse_mode="Markdown"
         )
         return EDIT_USER
 
@@ -2233,7 +2232,6 @@ async def show_edit_squad_selection(update: Update, context: ContextTypes.DEFAUL
     await update.callback_query.edit_message_text(
         text=message,
         reply_markup=InlineKeyboardMarkup(keyboard),
-        parse_mode="Markdown"
     )
 
     return EDIT_USER
@@ -3322,7 +3320,6 @@ async def handle_edit_field_selection(update: Update, context: ContextTypes.DEFA
             await query.edit_message_text(
                 text=f"✅ Внутренние сквады обновлены: {summary}",
                 reply_markup=InlineKeyboardMarkup(keyboard),
-                parse_mode="Markdown"
             )
         except Exception as e:
             logger.error(f"Failed to update internal squads for user {user.get('uuid')}: {e}")
@@ -3330,7 +3327,6 @@ async def handle_edit_field_selection(update: Update, context: ContextTypes.DEFA
             await query.edit_message_text(
                 text="❌ Не удалось обновить внутренние сквады. Проверьте логи.",
                 reply_markup=InlineKeyboardMarkup(keyboard),
-                parse_mode="Markdown"
             )
         return EDIT_USER
 
@@ -3383,7 +3379,6 @@ async def handle_edit_field_selection(update: Update, context: ContextTypes.DEFA
             await query.edit_message_text(
                 text=f"✅ {action_text}:\n{summary}",
                 reply_markup=InlineKeyboardMarkup(keyboard),
-                parse_mode="Markdown"
             )
         except Exception as e:
             logger.error(f"Failed to update external squads for user {user.get('uuid')}: {e}")
