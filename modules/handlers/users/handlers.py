@@ -2117,6 +2117,126 @@ async def show_squad_selection(update: Update, context: ContextTypes.DEFAULT_TYP
 
     return CREATE_USER_FIELD
 
+
+async def show_edit_squad_selection(update: Update, context: ContextTypes.DEFAULT_TYPE, is_internal: bool):
+    """Render squad selection while editing an existing user"""
+    user = context.user_data.get("edit_user")
+    if not user:
+        await update.callback_query.answer("⛔ Пользователь не найден в сессии.", show_alert=True)
+        return EDIT_USER
+
+    options_key = "edit_internal_squads_options" if is_internal else "edit_external_squads_options"
+    selected_key = "edit_selected_internal_squads" if is_internal else "edit_selected_external_squads"
+    title = "Внутренние сквады" if is_internal else "Внешние сквады"
+
+    # Load squads list and cache it
+    if options_key not in context.user_data:
+        try:
+            if is_internal:
+                resp = await SquadAPI.get_internal_squads()
+                key_name = "internalSquads"
+            else:
+                resp = await SquadAPI.get_external_squads()
+                key_name = "externalSquads"
+
+            squads = []
+            if isinstance(resp, dict):
+                if key_name in resp:
+                    squads = resp.get(key_name) or []
+                elif isinstance(resp.get("response"), dict) and key_name in resp["response"]:
+                    squads = resp["response"].get(key_name) or []
+                elif isinstance(resp.get("response"), list):
+                    squads = resp.get("response") or []
+            elif isinstance(resp, list):
+                squads = resp
+
+            context.user_data[options_key] = squads
+        except Exception as e:
+            logger.error(f"Failed to load squads for edit ({title}): {e}")
+            context.user_data[options_key] = []
+
+    squads = context.user_data.get(options_key) or []
+
+    if not squads:
+        keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data=f"edit_{user.get('uuid', '')}")]]
+        await update.callback_query.edit_message_text(
+            text=f"⚠️ Нет доступных сквадов для раздела «{title}».",
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode="Markdown"
+        )
+        return EDIT_USER
+
+    def normalize_ids(raw_items):
+        result = []
+        if isinstance(raw_items, str):
+            raw_items = [raw_items]
+        if isinstance(raw_items, list):
+            for item in raw_items:
+                if isinstance(item, str):
+                    val = item.strip()
+                elif isinstance(item, dict):
+                    val = str(item.get("uuid") or item.get("id") or "").strip()
+                else:
+                    val = ""
+                if val:
+                    result.append(val)
+        return result
+
+    # Initialize selected list from user data on first render
+    if selected_key not in context.user_data:
+        if is_internal:
+            base_selected = user.get("activeInternalSquads") or user.get("internalSquads") or []
+        else:
+            base_selected = (
+                user.get("externalSquads")
+                or user.get("activeExternalSquads")
+                or user.get("externalSquadUuids")
+                or []
+            )
+        context.user_data[selected_key] = normalize_ids(base_selected)
+
+    selected = context.user_data.get(selected_key, [])
+
+    def chunk_buttons(buttons, size=2):
+        for i in range(0, len(buttons), size):
+            yield buttons[i:i + size]
+
+    buttons = []
+    for squad in squads:
+        uuid = str(squad.get("uuid") or squad.get("id") or "").strip()
+        if not uuid:
+            continue
+        name = squad.get("name") or squad.get("title") or uuid
+        is_selected = uuid in selected
+        prefix = "toggle_edit_internal_squad_" if is_internal else "toggle_edit_external_squad_"
+        buttons.append(InlineKeyboardButton(f"{'✅' if is_selected else '▫️'} {name}", callback_data=f"{prefix}{uuid}"))
+
+    keyboard = [list(row) for row in chunk_buttons(buttons, size=2)]
+    keyboard.append([InlineKeyboardButton("✅ Сохранить", callback_data="edit_internal_squad_done" if is_internal else "edit_external_squad_done")])
+    keyboard.append([InlineKeyboardButton("🔙 Назад", callback_data=f"edit_{user.get('uuid', '')}")])
+
+    selected_names = []
+    for squad in squads:
+        uuid = str(squad.get("uuid") or squad.get("id") or "").strip()
+        if uuid in selected:
+            selected_names.append(squad.get("name") or squad.get("title") or uuid)
+    selected_text = ", ".join(selected_names) if selected_names else "не выбрано"
+
+    message = f"{'🏠' if is_internal else '🌐'} *{title}*\n"
+    message += f"Пользователь: `{escape_markdown(user.get('username',''))}`\n\n"
+    message += "Отметьте сквады, в которые нужно добавить пользователя.\n"
+    if not is_internal:
+        message += "⚠️ Снятие галочки не удаляет из внешнего сквада (API поддерживает только добавление).\n"
+    message += f"Текущее: {selected_text}"
+
+    await update.callback_query.edit_message_text(
+        text=message,
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode="Markdown"
+    )
+
+    return EDIT_USER
+
 @check_admin
 async def handle_create_user_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle user input when creating a user"""
@@ -3112,13 +3232,25 @@ async def start_edit_user(update: Update, context: ContextTypes.DEFAULT_TYPE, uu
     # Сохраняем данные пользователя для редактирования
     context.user_data["edit_user"] = user
     context.user_data["edit_field"] = None
+    # Reset squad selection caches for current user
+    for key in (
+        "edit_internal_squads_options",
+        "edit_external_squads_options",
+        "edit_selected_internal_squads",
+        "edit_selected_external_squads",
+    ):
+        context.user_data.pop(key, None)
     
     # Создаем меню выбора поля для редактирования
     keyboard = []
     for field_key, field_name in USER_FIELDS.items():
         if field_key in user:  # Показываем только поля, которые есть у пользователя
             keyboard.append([InlineKeyboardButton(f"📝 {field_name}", callback_data=f"edit_field_{field_key}")])
-    
+
+    # Direct buttons for squad management
+    keyboard.insert(0, [InlineKeyboardButton("🧭 Внутренние сквады", callback_data="edit_internal_squads")])
+    keyboard.insert(1, [InlineKeyboardButton("🌐 Внешние сквады", callback_data="edit_external_squads")])
+
     keyboard.append([InlineKeyboardButton("🔙 Назад к пользователю", callback_data=f"view_{uuid}")])
     reply_markup = InlineKeyboardMarkup(keyboard)
     
@@ -3140,7 +3272,120 @@ async def handle_edit_field_selection(update: Update, context: ContextTypes.DEFA
     await query.answer()
     
     data = query.data
+    user = context.user_data.get("edit_user")
     is_admin = context.user_data.get('is_admin', False)
+
+    if data == "edit_internal_squads":
+        return await show_edit_squad_selection(update, context, True)
+
+    elif data == "edit_external_squads":
+        return await show_edit_squad_selection(update, context, False)
+
+    elif data.startswith("toggle_edit_internal_squad_"):
+        squad_uuid = data[len("toggle_edit_internal_squad_"):]
+        selected = context.user_data.setdefault("edit_selected_internal_squads", [])
+        if squad_uuid in selected:
+            selected.remove(squad_uuid)
+        else:
+            selected.append(squad_uuid)
+        return await show_edit_squad_selection(update, context, True)
+
+    elif data.startswith("toggle_edit_external_squad_"):
+        squad_uuid = data[len("toggle_edit_external_squad_"):]
+        selected = context.user_data.setdefault("edit_selected_external_squads", [])
+        if squad_uuid in selected:
+            selected.remove(squad_uuid)
+        else:
+            selected.append(squad_uuid)
+        return await show_edit_squad_selection(update, context, False)
+
+    elif data == "edit_internal_squad_done":
+        if not user or not user.get("uuid"):
+            await query.edit_message_text("❌ Не удалось определить пользователя для обновления сквадов.")
+            return EDIT_USER
+        selected_internal = context.user_data.get("edit_selected_internal_squads", [])
+        try:
+            await SquadAPI.bulk_update_internal_squads([user["uuid"]], selected_internal)
+            context.user_data["edit_user"]["activeInternalSquads"] = selected_internal
+            keyboard = [
+                [InlineKeyboardButton("📝 Вернуться к редактированию", callback_data=f"edit_{user['uuid']}")],
+                [InlineKeyboardButton("👁️ Открыть пользователя", callback_data=f"view_{user['uuid']}")],
+            ]
+            await query.edit_message_text(
+                text=f"✅ Внутренние сквады обновлены: {', '.join(selected_internal) if selected_internal else 'не выбрано'}",
+                reply_markup=InlineKeyboardMarkup(keyboard),
+                parse_mode="Markdown"
+            )
+        except Exception as e:
+            logger.error(f"Failed to update internal squads for user {user.get('uuid')}: {e}")
+            keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data=f"edit_{user['uuid']}")]]
+            await query.edit_message_text(
+                text="❌ Не удалось обновить внутренние сквады. Проверьте логи.",
+                reply_markup=InlineKeyboardMarkup(keyboard),
+                parse_mode="Markdown"
+            )
+        return EDIT_USER
+
+    elif data == "edit_external_squad_done":
+        if not user or not user.get("uuid"):
+            await query.edit_message_text("❌ Не удалось определить пользователя для обновления сквадов.")
+            return EDIT_USER
+        selected_external = context.user_data.get("edit_selected_external_squads", [])
+
+        def existing_external_ids(u):
+            result = set()
+            for key in ("externalSquads", "activeExternalSquads", "externalSquadUuids"):
+                raw = u.get(key)
+                if not raw:
+                    continue
+                if isinstance(raw, str):
+                    result.add(raw.strip())
+                elif isinstance(raw, list):
+                    for item in raw:
+                        if isinstance(item, str):
+                            result.add(item.strip())
+                        elif isinstance(item, dict):
+                            val = str(item.get("uuid") or item.get("id") or "").strip()
+                            if val:
+                                result.add(val)
+            return result
+
+        already_in_squads = existing_external_ids(user)
+        to_add = [s for s in selected_external if s and s not in already_in_squads]
+
+        name_map = {}
+        for squad in context.user_data.get("edit_external_squads_options", []) or []:
+            uuid_val = str(squad.get("uuid") or squad.get("id") or "").strip()
+            if uuid_val:
+                name_map[uuid_val] = squad.get("name") or squad.get("title") or uuid_val
+
+        try:
+            for squad_uuid in to_add:
+                await SquadAPI.add_users_to_external_squad(squad_uuid, [user["uuid"]])
+            # Update cached user info
+            context.user_data["edit_user"]["externalSquads"] = list(already_in_squads.union(selected_external))
+
+            label = [name_map.get(uuid, uuid) for uuid in selected_external] if selected_external else []
+            summary = ", ".join(label) if label else "не выбрано"
+            action_text = "Добавлен во внешние сквады" if to_add else "Сквады не изменены (пользователь уже состоит в выбранных)"
+            keyboard = [
+                [InlineKeyboardButton("📝 Вернуться к редактированию", callback_data=f"edit_{user['uuid']}")],
+                [InlineKeyboardButton("👁️ Открыть пользователя", callback_data=f"view_{user['uuid']}")],
+            ]
+            await query.edit_message_text(
+                text=f"✅ {action_text}:\n{summary}",
+                reply_markup=InlineKeyboardMarkup(keyboard),
+                parse_mode="Markdown"
+            )
+        except Exception as e:
+            logger.error(f"Failed to update external squads for user {user.get('uuid')}: {e}")
+            keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data=f"edit_{user['uuid']}")]]
+            await query.edit_message_text(
+                text="❌ Не удалось обновить внешние сквады. Проверьте логи.",
+                reply_markup=InlineKeyboardMarkup(keyboard),
+                parse_mode="Markdown"
+            )
+        return EDIT_USER
 
     if data.startswith("edit_field_"):
         field = data[11:]  # убираем "edit_field_"
