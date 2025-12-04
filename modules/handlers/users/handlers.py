@@ -2223,7 +2223,8 @@ async def show_edit_squad_selection(update: Update, context: ContextTypes.DEFAUL
     selected_text = ", ".join(selected_names) if selected_names else "не выбрано"
 
     message = f"{'🏠' if is_internal else '🌐'} *{title}*\n"
-    message += f"Пользователь: `{escape_markdown(user.get('username',''))}`\n\n"
+    # Avoid backticks to keep Markdown parsing safe with arbitrary usernames
+    message += f"Пользователь: {escape_markdown(user.get('username',''))}\n\n"
     message += "Отметьте сквады, в которые нужно добавить пользователя.\n"
     if not is_internal:
         message += "⚠️ Снятие галочки не удаляет из внешнего сквада (API поддерживает только добавление).\n"
