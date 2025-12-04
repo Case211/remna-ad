@@ -1552,7 +1552,6 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         if result:
             keyboard = [
-                [InlineKeyboardButton("👁️ Просмотр пользователя", callback_data=f"view_{user['uuid']}")],
                 [InlineKeyboardButton("📝 Продолжить редактирование", callback_data=f"edit_{user['uuid']}")],
                 [InlineKeyboardButton("🔙 Назад к списку", callback_data="back_to_list")]
             ]
@@ -3279,7 +3278,7 @@ async def start_edit_user(update: Update, context: ContextTypes.DEFAULT_TYPE, uu
         ]
     ]
     keyboard.extend(list(chunk(field_buttons, 2)))
-    keyboard.append([InlineKeyboardButton("🔙 Назад к пользователю", callback_data=f"view_{uuid}")])
+    keyboard.append([InlineKeyboardButton("🔙 Назад к списку", callback_data="back_to_list")])
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     message = f"📝 *Редактирование пользователя {escape_markdown(user['username'])}*\n\n"
@@ -3344,7 +3343,7 @@ async def handle_edit_field_selection(update: Update, context: ContextTypes.DEFA
             summary = ", ".join(label) if label else "не выбрано"
             keyboard = [
                 [InlineKeyboardButton("📝 Вернуться к редактированию", callback_data=f"edit_{user['uuid']}")],
-                [InlineKeyboardButton("👁️ Открыть пользователя", callback_data=f"view_{user['uuid']}")],
+                [InlineKeyboardButton("🔙 Назад к списку", callback_data="back_to_list")],
             ]
             await query.edit_message_text(
                 text=f"✅ Внутренние сквады обновлены: {summary}",
@@ -3403,7 +3402,7 @@ async def handle_edit_field_selection(update: Update, context: ContextTypes.DEFA
             action_text = "Добавлен во внешние сквады" if to_add else "Сквады не изменены (пользователь уже состоит в выбранных)"
             keyboard = [
                 [InlineKeyboardButton("📝 Вернуться к редактированию", callback_data=f"edit_{user['uuid']}")],
-                [InlineKeyboardButton("👁️ Открыть пользователя", callback_data=f"view_{user['uuid']}")],
+                [InlineKeyboardButton("🔙 Назад к списку", callback_data="back_to_list")],
             ]
             await query.edit_message_text(
                 text=f"✅ {action_text}:\n{summary}",
@@ -3447,7 +3446,7 @@ async def handle_edit_field_selection(update: Update, context: ContextTypes.DEFA
         
         keyboard = [
             [InlineKeyboardButton("🔙 Назад к выбору поля", callback_data=f"edit_{user['uuid']}")],
-            [InlineKeyboardButton("❌ Отмена", callback_data=f"view_{user['uuid']}")]
+            [InlineKeyboardButton("❌ Отмена", callback_data=f"edit_{user['uuid']}")]
         ]
         # Add preset inline buttons for specific fields
         preset_keyboard = []
@@ -3572,10 +3571,9 @@ async def handle_edit_field_value(update: Update, context: ContextTypes.DEFAULT_
                 if result:
                     context.user_data["edit_user"]["expireAt"] = new_date
                     keyboard = [
-                        [InlineKeyboardButton("👤 К пользователю", callback_data=f"view_{user['uuid']}")],
-                        [InlineKeyboardButton("✏️ Продолжить редактирование", callback_data=f"edit_{user['uuid']}")],
-                        [InlineKeyboardButton("🔙 Назад к списку", callback_data="back_to_list")],
-                    ]
+                [InlineKeyboardButton("✏️ Продолжить редактирование", callback_data=f"edit_{user['uuid']}")],
+                [InlineKeyboardButton("🔙 Назад к списку", callback_data="back_to_list")],
+            ]
                     await query.edit_message_text(
                         text=f"✅ Дата истечения обновлена: {new_date[:10]}",
                         reply_markup=InlineKeyboardMarkup(keyboard)
@@ -3600,7 +3598,6 @@ async def handle_edit_field_value(update: Update, context: ContextTypes.DEFAULT_
                     context.user_data["edit_user"]["trafficLimitBytes"] = bytes_value
                     shown = "Безлимитный" if bytes_value == 0 else f"{gb} ГБ"
                     keyboard = [
-                        [InlineKeyboardButton("👤 К пользователю", callback_data=f"view_{user['uuid']}")],
                         [InlineKeyboardButton("✏️ Продолжить редактирование", callback_data=f"edit_{user['uuid']}")],
                         [InlineKeyboardButton("🔙 Назад к списку", callback_data="back_to_list")],
                     ]
@@ -3625,7 +3622,6 @@ async def handle_edit_field_value(update: Update, context: ContextTypes.DEFAULT_
                 if result:
                     context.user_data["edit_user"]["trafficLimitStrategy"] = strategy
                     keyboard = [
-                        [InlineKeyboardButton("👤 К пользователю", callback_data=f"view_{user['uuid']}")],
                         [InlineKeyboardButton("✏️ Продолжить редактирование", callback_data=f"edit_{user['uuid']}")],
                         [InlineKeyboardButton("🔙 Назад к списку", callback_data="back_to_list")],
                     ]
@@ -3656,7 +3652,6 @@ async def handle_edit_field_value(update: Update, context: ContextTypes.DEFAULT_
                     context.user_data["edit_user"].update(update_data)
                     shown = "Без ограничений" if devices == 0 else str(devices)
                     keyboard = [
-                        [InlineKeyboardButton("👤 К пользователю", callback_data=f"view_{user['uuid']}")],
                         [InlineKeyboardButton("✏️ Продолжить редактирование", callback_data=f"edit_{user['uuid']}")],
                         [InlineKeyboardButton("🔙 Назад к списку", callback_data="back_to_list")],
                     ]
@@ -3780,7 +3775,6 @@ async def handle_edit_field_value(update: Update, context: ContextTypes.DEFAULT_
     
     if result:
         keyboard = [
-            [InlineKeyboardButton("👁️ Просмотр пользователя", callback_data=f"view_{user['uuid']}")],
             [InlineKeyboardButton("📝 Продолжить редактирование", callback_data=f"edit_{user['uuid']}")],
             [InlineKeyboardButton("🔙 Назад к списку", callback_data="back_to_list")]
         ]
