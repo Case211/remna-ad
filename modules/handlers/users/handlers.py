@@ -3440,18 +3440,19 @@ async def handle_edit_field_selection(update: Update, context: ContextTypes.DEFA
         else:
             display_value = str(current_value) if current_value else "Не указано"
         
-        message = f"📝 *Редактирование поля: {field_name}*\n\n"
-        message += f"Текущее значение: `{display_value}`\n\n"
+        # Plain text to avoid Telegram Markdown parsing issues
+        message = f"📝 Редактирование поля: {field_name}\n\n"
+        message += f"Текущее значение: {display_value}\n\n"
         message += f"Введите новое значение для поля {field_name}:"
         
         keyboard = [
             [InlineKeyboardButton("🔙 Назад к выбору поля", callback_data=f"edit_{user['uuid']}")],
-            [InlineKeyboardButton("❌ Отмена", callback_data=f"edit_{user['uuid']}")]
+            [InlineKeyboardButton("❌ Отмена", callback_data="back_to_list")]
         ]
         # Add preset inline buttons for specific fields
         preset_keyboard = []
         if field == "expireAt":
-            message += "\nВы можете ввести дату в формате `YYYY-MM-DD` для установки точной даты,\n"
+            message += "\nВы можете ввести дату в формате YYYY-MM-DD для установки точной даты,\n"
             message += "или нажать на кнопку, чтобы добавить дни к текущему сроку:\n"
             preset_keyboard.extend([
                 [
@@ -3465,7 +3466,7 @@ async def handle_edit_field_selection(update: Update, context: ContextTypes.DEFA
                 ],
             ])
         elif field == "trafficLimitBytes":
-            message += "\nВведите лимит в ГБ (целое число). `0` — безлимит.\nИли выберите готовое значение ниже:"
+            message += "\nВведите лимит в ГБ (целое число). 0 — безлимит.\nИли выберите готовое значение ниже:"
             preset_keyboard.extend([
                 [
                     InlineKeyboardButton("0 (безлимит)", callback_data="edit_traffic_gb_0"),
@@ -3479,7 +3480,7 @@ async def handle_edit_field_selection(update: Update, context: ContextTypes.DEFA
                 ],
             ])
         elif field == "trafficLimitStrategy":
-            message += "\nВыберите стратегию сброса: `NO_RESET` (без сброса), `DAY`, `WEEK`, `MONTH`."
+            message += "\nВыберите стратегию сброса: NO_RESET (без сброса), DAY, WEEK, MONTH."
             preset_keyboard.extend([
                 [
                     InlineKeyboardButton("NO_RESET", callback_data="edit_strategy_NO_RESET"),
@@ -3491,7 +3492,7 @@ async def handle_edit_field_selection(update: Update, context: ContextTypes.DEFA
                 ],
             ])
         elif field == "hwidDeviceLimit":
-            message += "\nВведите лимит устройств (целое число). `0` — без ограничений.\nИли выберите готовое значение ниже:"
+            message += "\nВведите лимит устройств (целое число). 0 — без ограничений.\nИли выберите готовое значение ниже:"
             preset_keyboard.extend([
                 [
                     InlineKeyboardButton("0", callback_data="edit_devices_0"),
@@ -3512,7 +3513,6 @@ async def handle_edit_field_selection(update: Update, context: ContextTypes.DEFA
         await query.edit_message_text(
             text=message,
             reply_markup=reply_markup,
-            parse_mode="Markdown"
         )
         
         return EDIT_VALUE
