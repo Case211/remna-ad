@@ -3341,10 +3341,7 @@ async def handle_edit_field_selection(update: Update, context: ContextTypes.DEFA
             context.user_data["edit_user"]["activeInternalSquads"] = selected_internal
             label = [escape_markdown(name_map.get(uuid, uuid)) for uuid in selected_internal] if selected_internal else []
             summary = ", ".join(label) if label else "не выбрано"
-            keyboard = [
-                [InlineKeyboardButton("📝 Вернуться к редактированию", callback_data=f"edit_{user['uuid']}")],
-                [InlineKeyboardButton("🔙 Назад к списку", callback_data="back_to_list")],
-            ]
+            keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data=f"edit_{user['uuid']}")]]
             await query.edit_message_text(
                 text=f"✅ Внутренние сквады обновлены: {summary}",
                 reply_markup=InlineKeyboardMarkup(keyboard),
@@ -3400,10 +3397,7 @@ async def handle_edit_field_selection(update: Update, context: ContextTypes.DEFA
             label = [escape_markdown(name_map.get(uuid, uuid)) for uuid in selected_external] if selected_external else []
             summary = ", ".join(label) if label else "не выбрано"
             action_text = "Добавлен во внешние сквады" if to_add else "Сквады не изменены (пользователь уже состоит в выбранных)"
-            keyboard = [
-                [InlineKeyboardButton("📝 Вернуться к редактированию", callback_data=f"edit_{user['uuid']}")],
-                [InlineKeyboardButton("🔙 Назад к списку", callback_data="back_to_list")],
-            ]
+            keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data=f"edit_{user['uuid']}")]]
             await query.edit_message_text(
                 text=f"✅ {action_text}:\n{summary}",
                 reply_markup=InlineKeyboardMarkup(keyboard),
@@ -3446,8 +3440,7 @@ async def handle_edit_field_selection(update: Update, context: ContextTypes.DEFA
         message += f"Введите новое значение для поля {field_name}:"
         
         keyboard = [
-            [InlineKeyboardButton("🔙 Назад к выбору поля", callback_data=f"edit_{user['uuid']}")],
-            [InlineKeyboardButton("❌ Отмена", callback_data="back_to_list")]
+            [InlineKeyboardButton("🔙 Назад", callback_data=f"edit_{user['uuid']}")]
         ]
         # Add preset inline buttons for specific fields
         preset_keyboard = []
@@ -3570,10 +3563,7 @@ async def handle_edit_field_value(update: Update, context: ContextTypes.DEFAULT_
                 result = await UserAPI.update_user(user["uuid"], update_data)
                 if result:
                     context.user_data["edit_user"]["expireAt"] = new_date
-                    keyboard = [
-                [InlineKeyboardButton("✏️ Продолжить редактирование", callback_data=f"edit_{user['uuid']}")],
-                [InlineKeyboardButton("🔙 Назад к списку", callback_data="back_to_list")],
-            ]
+                    keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data=f"edit_{user['uuid']}")]]
                     await query.edit_message_text(
                         text=f"✅ Дата истечения обновлена: {new_date[:10]}",
                         reply_markup=InlineKeyboardMarkup(keyboard)
@@ -3598,8 +3588,7 @@ async def handle_edit_field_value(update: Update, context: ContextTypes.DEFAULT_
                     context.user_data["edit_user"]["trafficLimitBytes"] = bytes_value
                     shown = "Безлимитный" if bytes_value == 0 else f"{gb} ГБ"
                     keyboard = [
-                        [InlineKeyboardButton("✏️ Продолжить редактирование", callback_data=f"edit_{user['uuid']}")],
-                        [InlineKeyboardButton("🔙 Назад к списку", callback_data="back_to_list")],
+                        [InlineKeyboardButton("🔙 Назад", callback_data=f"edit_{user['uuid']}")],
                     ]
                     await query.edit_message_text(
                         text=f"✅ Лимит трафика обновлён: {shown}",
@@ -3622,8 +3611,7 @@ async def handle_edit_field_value(update: Update, context: ContextTypes.DEFAULT_
                 if result:
                     context.user_data["edit_user"]["trafficLimitStrategy"] = strategy
                     keyboard = [
-                        [InlineKeyboardButton("✏️ Продолжить редактирование", callback_data=f"edit_{user['uuid']}")],
-                        [InlineKeyboardButton("🔙 Назад к списку", callback_data="back_to_list")],
+                        [InlineKeyboardButton("🔙 Назад", callback_data=f"edit_{user['uuid']}")],
                     ]
                     await query.edit_message_text(
                         text=f"✅ Стратегия сброса трафика обновлена: {strategy}",
@@ -3652,8 +3640,7 @@ async def handle_edit_field_value(update: Update, context: ContextTypes.DEFAULT_
                     context.user_data["edit_user"].update(update_data)
                     shown = "Без ограничений" if devices == 0 else str(devices)
                     keyboard = [
-                        [InlineKeyboardButton("✏️ Продолжить редактирование", callback_data=f"edit_{user['uuid']}")],
-                        [InlineKeyboardButton("🔙 Назад к списку", callback_data="back_to_list")],
+                        [InlineKeyboardButton("🔙 Назад", callback_data=f"edit_{user['uuid']}")],
                     ]
                     await query.edit_message_text(
                         text=f"✅ Лимит устройств обновлён: {shown}",
@@ -3774,10 +3761,7 @@ async def handle_edit_field_value(update: Update, context: ContextTypes.DEFAULT_
     result = await UserAPI.update_user(user["uuid"], update_data)
     
     if result:
-        keyboard = [
-            [InlineKeyboardButton("📝 Продолжить редактирование", callback_data=f"edit_{user['uuid']}")],
-            [InlineKeyboardButton("🔙 Назад к списку", callback_data="back_to_list")]
-        ]
+        keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data=f"edit_{user['uuid']}")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
         await update.message.reply_text(
@@ -3786,9 +3770,7 @@ async def handle_edit_field_value(update: Update, context: ContextTypes.DEFAULT_
             parse_mode="Markdown"
         )
     else:
-        keyboard = [
-            [InlineKeyboardButton("🔙 Назад", callback_data=f"edit_{user['uuid']}")]
-        ]
+        keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data=f"edit_{user['uuid']}")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
         await update.message.reply_text(
