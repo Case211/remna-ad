@@ -1,4 +1,6 @@
 ﻿# Remnawave Admin Bot
+[ДАННЫЙ БОТ БОЛЕЕ НЕ ПОДДЕРЖИВАЕТСЯ!
+ДЛЯ ВЕРСИИ ПАНЕЛИ 2.4.0 И ВЫШЕ ИСПОЛЬЗУЙТЕ БОТА ИЗ МОЕГО РЕПОЗИТОРИЯ "remnawave-admin"](https://github.com/Case211/remnawave-admin)
 
 **Доступные языки:** [English](README_EN.md)
 
